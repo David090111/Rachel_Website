@@ -16,8 +16,34 @@ const connectDB=require('./config/db');
 
 
 
+
+
 const app = express();
- app.use(cors());
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "https://rachel-website-frontend.vercel.app", // prod FE
+  // thêm custom domain nếu có: "https://yourdomain.com",
+]);
+
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin) return cb(null, true); // healthcheck, curl, uptime
+    try {
+      const u = new URL(origin);
+      const ok =
+        allowedOrigins.has(origin) ||
+        // cho preview của chính project này (tuỳ bạn giữ/ bỏ)
+        u.hostname.endsWith(".vercel.app");
+      return ok ? cb(null, true) : cb(new Error("Not allowed by CORS"));
+    } catch {
+      return cb(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET","POST","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
+}));
+app.options("*", cors()); // preflight
+
  app.use(express.json());
     
  app.use(morgan('dev'));
